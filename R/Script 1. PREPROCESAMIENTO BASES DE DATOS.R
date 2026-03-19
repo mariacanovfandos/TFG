@@ -89,7 +89,7 @@ chebi_structures_interes <- chebi_structures_inicial %>%
   # Quitar los que no tengan InChIKey
   drop_na(InChIKey)
 
-# 3. Limpiar la tabla de nombres (no tiene InChIKey)
+# 3. Limpiar la tabla de compunds (no tiene InChIKey)
 chebi_compounds_interes <- chebi_compounds_inicial %>%
   select(name, chebi_accession) %>%
   rename(
@@ -102,11 +102,11 @@ view(chebi_compounds_interes)
 
 
 # 4. Corregir listas para poder hacer la unión
-      # Convertir a texto y quitar espacios invisibles
+      # Convertir a texto y quitar espacios
       chebi_compounds_interes$ID_ChEBI <- trimws(as.character(chebi_compounds_interes$ID_ChEBI))
       View(chebi_compounds_interes)
     
-      # Quitar "CHEBI:", convertir a texto y quitar espacios invisibles para poder unir
+      # Quitar "CHEBI:", convertir a texto y quitar espacios para poder unir
       chebi_structures_interes$ID_ChEBI <- trimws(gsub("CHEBI:", "", as.character(chebi_structures_interes$ID_ChEBI)))
       View(chebi_structures_interes)
 
@@ -120,9 +120,9 @@ View(chebi_unificado_interes)
 # ==========================================
 
 quimicos_interes_todos <- ctd_interes %>%
-  # 1. Pegamos DrugBank usando el InChIKey
+  # 1. Pegar DrugBank usando el InChIKey
   full_join(drugbank_interes, by = "InChIKey") %>%
-  # 2. Le pegamos ChEBI usando también el InChIKey
+  # 2. Pegar ChEBI usando también el InChIKey
   full_join(chebi_unificado_interes, by = "InChIKey")
 
 view(quimicos_interes_todos)
@@ -131,10 +131,8 @@ view(quimicos_interes_todos)
 # ==========================================
 # PASO 4: Guardar datos
 # ==========================================
-ruta_resultados <- "/Users/mersmac/Desktop/TFG/RESULTADOS"
 
-# Guardar como CSV
 write_csv(quimicos_interes_todos, file.path(ruta_resultados, "TFG_quimicos_interes.csv"))
-
-# Guardar como RDS
 saveRDS(quimicos_interes_todos, file.path(ruta_resultados, "TFG_quimicos_interes.rds"))
+
+message("Proceso finalizado. Archivos guardados en: ", ruta_resultados)
