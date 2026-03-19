@@ -8,8 +8,6 @@ if (!require("here")) install.packages("here")
 library(tidyverse)
 library(here)
 
-# DEFINICIÓN DE RUTAS RELATIVAS (Funcionará en cualquier ordenador)
-# "here()" apunta a la carpeta principal donde tengas tu proyecto (.Rproj)
 ruta_descargables <- here("DESCARGABLES")
 ruta_resultados   <- here("RESULTADOS")
 
