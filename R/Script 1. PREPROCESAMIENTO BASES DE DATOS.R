@@ -8,8 +8,8 @@ if (!require("here")) install.packages("here")
 library(tidyverse)
 library(here)
 
-ruta_descargables <- here("DESCARGABLES")
-ruta_resultados   <- here("RESULTADOS")
+ruta_descargables <- here("../DESCARGABLES")
+ruta_resultados   <- here("../RESULTADOS")
 
 # Crear la carpeta de resultados si no existe
 if (!dir.exists(ruta_resultados)) dir.create(ruta_resultados)
@@ -46,8 +46,8 @@ View(drugbank_interes)
 
 # 1. Leer el archivo ignorando los comentarios (#)
 ctd_inicial <- read_tsv(file.path(ruta_descargables, "CTD_Chemicals.tsv"), 
-                    comment = "#", 
-                    col_names = FALSE)
+                        comment = "#", 
+                        col_names = FALSE)
 
 # 2. Asignar nombres a las columnas
 colnames(ctd_inicial) <- c("ChemicalName", "ChemicalID", "CasRN", "PubChemCID", "PubChemSID", "DTXSID", "InChIKey", "Definition", "ParentIDs", "TreeNumbers", "ParentTreeNumbers", "MESHSynonyms", "CTDCuratedSynonyms")
@@ -57,8 +57,7 @@ View(ctd_inicial)
 # 3. Limpiar y seleccionar columnas de interés
 ctd_interes <- ctd_inicial %>%
   # Seleccionar y mantener las tres variables de interés (InChIKey se queda igual)
-  select(ChemicalID, ChemicalName, InChIKey, TreeNumbers) %>%
-  # TreeNumbers se mantiene para poder filtrar por categoría
+  select(ChemicalID, ChemicalName, InChIKey) %>%
   rename(
     ID_MeSH = ChemicalID,
     Nombre_CTD = ChemicalName
@@ -102,13 +101,13 @@ view(chebi_compounds_interes)
 
 
 # 4. Corregir listas para poder hacer la unión
-      # Convertir a texto y quitar espacios
-      chebi_compounds_interes$ID_ChEBI <- trimws(as.character(chebi_compounds_interes$ID_ChEBI))
-      View(chebi_compounds_interes)
-    
-      # Quitar "CHEBI:", convertir a texto y quitar espacios para poder unir
-      chebi_structures_interes$ID_ChEBI <- trimws(gsub("CHEBI:", "", as.character(chebi_structures_interes$ID_ChEBI)))
-      View(chebi_structures_interes)
+# Quitar "CHEBI:", convertir a texto y quitar espacios para poder unir
+chebi_compounds_interes$ID_ChEBI <- trimws(gsub("CHEBI:", "", as.character(chebi_compounds_interes$ID_ChEBI)))
+View(chebi_compounds_interes)
+
+
+chebi_structures_interes$ID_ChEBI <- trimws(gsub("CHEBI:", "", as.character(chebi_structures_interes$ID_ChEBI)))
+View(chebi_structures_interes)
 
 # 5. Unir tablas ChEBI en una sola por ID
 chebi_unificado_interes <- inner_join(chebi_structures_interes, chebi_compounds_interes, by = "ID_ChEBI")
