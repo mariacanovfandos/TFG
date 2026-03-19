@@ -1,12 +1,20 @@
 # SCRIPT 1: PREPROCESAMIENTO datos de bases de datos
-#==========================================
+#==================================================
 
-# 1. Instalar tidyverse y cargarla para limpiar archivos
-install.packages("tidyverse")
+# 1. Cargar librerías necesarias
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("here")) install.packages("here")
+
 library(tidyverse)
+library(here)
 
-# Ruta carpeta donde están los descargables
-ruta_descargables <- "/Users/mersmac/Desktop/TFG/DESCARGABLES"
+# DEFINICIÓN DE RUTAS RELATIVAS (Funcionará en cualquier ordenador)
+# "here()" apunta a la carpeta principal donde tengas tu proyecto (.Rproj)
+ruta_descargables <- here("DESCARGABLES")
+ruta_resultados   <- here("RESULTADOS")
+
+# Crear la carpeta de resultados si no existe
+if (!dir.exists(ruta_resultados)) dir.create(ruta_resultados)
 
 # ==========================================
 # PASO 1: Cargar y limpiar DrugBank
