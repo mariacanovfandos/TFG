@@ -22,7 +22,7 @@ if (!dir.exists(ruta_resultados)) dir.create(ruta_resultados)
 drugbank_inicial <- read_csv(file.path(ruta_descargables, "DRUGBANK_Vocabulary.csv"))
 View(drugbank_inicial)
 
-# 2. Seleccionar columnas de interés con tidyverse
+# 2. Seleccionar columnas de interés (estandarización)
 drugbank_interes <- drugbank_inicial %>%
   # Mantener solo las columnas de interés
   select(`DrugBank ID`, `Common name`, `Standard InChI Key`) %>%
@@ -56,7 +56,7 @@ View(ctd_inicial)
 
 # 3. Limpiar y seleccionar columnas de interés
 ctd_interes <- ctd_inicial %>%
-  # Seleccionar y mantener las tres variables de interés (InChIKey se queda igual)
+  # Seleccionar y mantener las tres variables de interés (InChIKey se queda igual) (estandarización)
   select(ChemicalID, ChemicalName, InChIKey) %>%
   rename(
     ID_MeSH = ChemicalID,
@@ -78,7 +78,7 @@ chebi_structures_inicial <- read_tsv(file.path(ruta_descargables, "CHEBI_Structu
 View(chebi_compounds_inicial)
 View(chebi_structures_inicial)
 
-# 2. Limpiar tabla estructuras (tiene InChIKey)
+# 2. Limpiar tabla estructuras (tiene InChIKey) (estandarización)
 chebi_structures_interes <- chebi_structures_inicial %>%
   select(compound_id, standard_inchi_key) %>%
   rename(
@@ -88,7 +88,7 @@ chebi_structures_interes <- chebi_structures_inicial %>%
   # Quitar los que no tengan InChIKey
   drop_na(InChIKey)
 
-# 3. Limpiar la tabla de compunds (no tiene InChIKey)
+# 3. Limpiar la tabla de compunds (no tiene InChIKey) (estandarización)
 chebi_compounds_interes <- chebi_compounds_inicial %>%
   select(name, chebi_accession) %>%
   rename(
@@ -104,7 +104,6 @@ view(chebi_compounds_interes)
 # Quitar "CHEBI:", convertir a texto y quitar espacios para poder unir
 chebi_compounds_interes$ID_ChEBI <- trimws(gsub("CHEBI:", "", as.character(chebi_compounds_interes$ID_ChEBI)))
 View(chebi_compounds_interes)
-
 
 chebi_structures_interes$ID_ChEBI <- trimws(gsub("CHEBI:", "", as.character(chebi_structures_interes$ID_ChEBI)))
 View(chebi_structures_interes)
