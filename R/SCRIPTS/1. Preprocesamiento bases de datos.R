@@ -65,7 +65,7 @@ ctd_interes <- ctd_inicial %>%
   # Quitar las filas que no tengan InChIKey
   drop_na(InChIKey)
 
-view(ctd_interes)
+View(ctd_interes)
 
 
 # ==========================================
@@ -114,7 +114,7 @@ View(chebi_unificado_interes)
 
 
 # ==========================================
-# PASO 3: Crear tabla con las 3 bases de datos juntas
+# PASO 4: Crear tabla con las 3 bases de datos juntas
 # ==========================================
 
 quimicos_interes_todos <- ctd_interes %>%
@@ -127,7 +127,7 @@ view(quimicos_interes_todos)
 
 
 # ==========================================
-# PASO 4: Guardar datos
+# PASO 5: Guardar datos
 # ==========================================
 
 write_csv(quimicos_interes_todos, file.path(ruta_resultados, "TFG_quimicos_interes.csv"))
