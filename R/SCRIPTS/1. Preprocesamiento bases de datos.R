@@ -29,7 +29,7 @@ drugbank_interes <- drugbank_inicial %>%
   # Cambiar el nombre para que no tengan espacios
   rename(
     ID_DrugBank = `DrugBank ID`,
-    Nombre_DrugBank = `Common name`,
+    Name_DrugBank = `Common name`,
     InChIKey = `Standard InChI Key`
   ) %>%
   # Descartar filas vacías: Si no tiene InChIKey, no sirve para cruzar datos
@@ -60,7 +60,7 @@ ctd_interes <- ctd_inicial %>%
   select(ChemicalID, ChemicalName, InChIKey) %>%
   rename(
     ID_MeSH = ChemicalID,
-    Nombre_CTD = ChemicalName
+    Name_CTD = ChemicalName
   ) %>%
   # Quitar las filas que no tengan InChIKey
   drop_na(InChIKey)
@@ -92,7 +92,7 @@ chebi_structures_interes <- chebi_structures_inicial %>%
 chebi_compounds_interes <- chebi_compounds_inicial %>%
   select(name, chebi_accession) %>%
   rename(
-    Nombre_ChEBI = name,
+    Name_ChEBI = name,
     ID_ChEBI = chebi_accession
   )
 
