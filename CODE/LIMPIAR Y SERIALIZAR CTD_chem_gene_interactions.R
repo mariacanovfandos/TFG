@@ -6,7 +6,7 @@ library(dplyr)
 library(readr)
 
 # 2. Leer archivo
-datos_quimico_gen <- read.csv("DB/CTD_chem_gene_interactions.csv", skip = 27)
+datos_quimico_gen <- read.csv("TFG/DB/CTD_chem_gene_interactions.csv", skip = 27)
 
 # 3. Limpiar archivo
 enfermedad_ruta_limpio <- datos_enfermedad_ruta %>%
