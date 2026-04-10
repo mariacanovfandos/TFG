@@ -69,4 +69,4 @@ for (i in 1:nrow(enfermedades_limpio)) {
 
 
 # Guardar grafo en la carpeta "RESULTADOS" de tu proyecto
-rdf_serialize(mi_grafo, doc = "RESULTADOS/diseases_ctd.ttl", format = "turtle")
+rdf_serialize(mi_grafo, doc = "TFG/RESULTADOS/diseases_ctd.ttl", format = "turtle")
