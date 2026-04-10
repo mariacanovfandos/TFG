@@ -6,7 +6,7 @@ library(dplyr)
 library(readr)
 
 # 2. Leer archivo
-datos_enfermedad_ruta <- read.csv("DB/CTD_diseases_pathways.csv", skip = 27)
+datos_enfermedad_ruta <- read.csv("TFG/DB/CTD_diseases_pathways.csv", skip = 27)
 
 # 3. Limpiar archivo
 enfermedad_ruta_limpio <- datos_enfermedad_ruta %>%
