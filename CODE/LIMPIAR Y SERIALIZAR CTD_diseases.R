@@ -6,20 +6,19 @@
 install.packages(c("rdflib", "dplyr"))
 library(rdflib)
 library(dplyr)
+library(data.table)
+library(tidyverse)
 
-datos_enfermedades <- read.csv("TFG/DB/CTD_diseases.csv", skip = 27, stringsAsFactors = FALSE)
+datos_enfermedades <- fread("https://ctdbase.org/reports/CTD_diseases.csv.gz", skip = 27, stringsAsFactors = FALSE)
 
-# 2. Corregir nombre de 1ª columna "X...DiseaseName" por "DiseaseName"
-colnames(datos_enfermedades)[1] <- "DiseaseName"
-
-# 3. Crear nueva tabla con columnas de interés
-enfermedades_limpio <- datos_enfermedades %>%
-  select(DiseaseName, DiseaseID)
-
-# 4. Excluir fila con # y el nodo raíz "MESH:C"
-enfermedades_limpio <- enfermedades_limpio %>%
+# 2. Limpiar archivo
+datos_enfermedades <- datos_enfermedades %>%
+  set_names(c("DiseaseName", "DiseaseID", "AltDiseaseIDs", "Definition", "ParentIDs",
+              "TreeNumbers", "ParentTreeNumbers", "Synonyms", "SlimMappings")) %>%
+  select(DiseaseName, DiseaseID) %>%
   filter(DiseaseName != "#") %>%          # Elimina la fila del símbolo #
   filter(DiseaseID != "MESH:C")           # Elimina la categoría general "Diseases"
+
 
 # ----------- SERIALIZACIÓN ------------
 
@@ -33,20 +32,20 @@ rdf_type <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 obo <- "http://purl.obolibrary.org/obo/"
 schema = "https://schema.org/"
 
-# 3. Hacer un bucle para toda la tabla
-for (i in 1:nrow(enfermedades_limpio)) {
+# 3. Bucle
+for (i in 1:nrow(datos_enfermedades)) {
   
   # Extraer datos de fila actual
-  DiseaseName <- enfermedades_limpio$DiseaseName[i]
-  ID_inicial <- enfermedades_limpio$DiseaseID[i] # Ej: "MESH:C538288"
+  DiseaseName <- datos_enfermedades$DiseaseName[i]
+  ID_inicial <- datos_enfermedades$DiseaseID[i] # Ej: "MESH:C538288"
   
   # Sustituir dos puntos por guion bajo para que sea una URL válida
   ID_formateado <- sub(":", "_", ID_inicial)
   
-  # Creamos la URI final de esta enfermedad específica
+  # Crear la URI final de esta enfermedad específica
   uri_enfermedad <- paste0(obo, ID_formateado)
   
-  # --- AÑADIR LOS TRIPLES AL GRAFO ---
+  # --- TRIPLETAS ---
   
   # Tripleta A: Declarar que este nodo es de tipo "Enfermedad" (SIO_010299)
   rdf_add(mi_grafo, 
@@ -68,5 +67,5 @@ for (i in 1:nrow(enfermedades_limpio)) {
 }
 
 
-# Guardar grafo en la carpeta "RESULTADOS" de tu proyecto
+# Guardar grafo en la carpeta "RESULTADOS"
 rdf_serialize(mi_grafo, doc = "TFG/RESULTADOS/diseases_ctd.ttl", format = "turtle")
