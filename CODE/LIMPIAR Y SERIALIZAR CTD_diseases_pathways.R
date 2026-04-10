@@ -4,19 +4,20 @@
 # 1. Cargar librerías
 library(dplyr)
 library(readr)
+library(data.table)
+library(tidyverse)
 
 # 2. Leer archivo
-datos_enfermedad_ruta <- read.csv("TFG/DB/CTD_diseases_pathways.csv", skip = 27)
+datos_enfermedad_ruta <- fread("https://ctdbase.org/reports/CTD_diseases_pathways.csv.gz", skip = 27, stringsAsFactors = FALSE)
 
 # 3. Limpiar archivo
-enfermedad_ruta_limpio <- datos_enfermedad_ruta %>%
-  rename(DiseaseName = 1) %>%
+datos_enfermedad_ruta <- datos_enfermedad_ruta %>%
+  set_names(c("DiseaseName", "DiseaseID", "PathwayName", "PathwayID", "InferenceGeneSymbol")) %>%
   # Seleccionar columnas de interés
   select(DiseaseName, DiseaseID, PathwayName, PathwayID) %>%
   mutate(across(everything(), as.character)) %>%
   mutate(across(everything(), ~na_if(., ""))) %>%
   slice(-1) %>%
-  # Filtro de seguridad
   filter(!is.na(DiseaseID) & !is.na(PathwayID))
 
 
@@ -26,8 +27,8 @@ enfermedad_ruta_limpio <- datos_enfermedad_ruta %>%
 ruta_guardado_asociaciones <- "TFG/RESULTADOS/diseases_pathways_association_ctd.ttl"
 cat("", file = ruta_guardado_asociaciones)
 
-# 2. Prefijos actualizados según el diagrama
-rdf_ns <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+# 2. Prefijos
+rdf <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 rdfs <- "http://www.w3.org/2000/01/rdf-schema#"
 sio <- "http://semanticscience.org/resource/"
 obo <- "http://purl.obolibrary.org/obo/"
@@ -35,26 +36,27 @@ schema <- "https://schema.org/"
 owl <- "http://www.w3.org/2002/07/owl#"
 
 mesh_prefix <- "http://id.nlm.nih.gov/mesh/"
-omim_prefix <- "http://purl.obolibrary.org/obo/OMIM_" # Prefijo para OMIM
+omim_prefix <- "http://purl.obolibrary.org/obo/OMIM_" 
 kegg_base <- "http://identifiers.org/kegg.pathway/"
 reactome_base <- "http://identifiers.org/reactome/"
-assoc_base <- "http://tfg.org/asociacion_dp/" 
+assoc_base <- "http://tfg.org/disease_pathway_association/" 
 
-# 3. Bucle para procesar (empezamos con 5 filas de prueba)
-for (i in 1:nrow(enfermedad_ruta_limpio)) { 
+# 3. Bucle 
+for (i in 1:nrow(datos_enfermedad_ruta)) { 
   
-  # --- EXTRAEMOS LOS DATOS ---
-  enf_nombre <- enfermedad_ruta_limpio$DiseaseName[i]
-  enf_id <- enfermedad_ruta_limpio$DiseaseID[i] 
-  ruta_nombre <- enfermedad_ruta_limpio$PathwayName[i]
-  ruta_id <- enfermedad_ruta_limpio$PathwayID[i] 
+  # --- EXTRAER LOS DATOS ---
+  enf_nombre <- datos_enfermedad_ruta$DiseaseName[i]
+  enf_id <- datos_enfermedad_ruta$DiseaseID[i] 
+  ruta_nombre <- datos_enfermedad_ruta$PathwayName[i]
+  ruta_id <- datos_enfermedad_ruta$PathwayID[i] 
   
-  # --- CREAMOS LAS URIs ---
-  uri_asociacion <- paste0("<", assoc_base, i, ">") 
+  # --- LIMPIAR IDs Y CREAR URIs ---
   
+  # Limpiar ID Enfermedad
   id_enf_limpio <- sub("MESH:", "", enf_id)
   uri_enfermedad <- paste0("<", mesh_prefix, id_enf_limpio, ">")
   
+  # Limpiar ID Ruta y crear URI de Ruta
   if (grepl("KEGG:", ruta_id)) {
     id_ruta_limpio <- sub("KEGG:", "", ruta_id)
     uri_ruta <- paste0("<", kegg_base, id_ruta_limpio, ">")
@@ -66,13 +68,15 @@ for (i in 1:nrow(enfermedad_ruta_limpio)) {
     uri_ruta <- paste0("<http://tfg.org/pathway_otro/", id_ruta_limpio, ">")
   }
   
-  # --- CONSTRUIR TRIPLETAS SEGÚN DIAGRAMA ---
+  uri_asociacion <- paste0("<", assoc_base, id_enf_limpio, "--", id_ruta_limpio, ">") 
+  
+  # --- CONSTRUIR TRIPLETAS ---
   lineas <- c()
   
   # NODO PUENTE (Asociación)
   # A. Tipo: obo:PW_0000013 "disease pathway"
   lineas <- c(lineas, paste(uri_asociacion, 
-                            paste0("<", rdf_ns, "type>"), 
+                            paste0("<", rdf, "type>"), 
                             paste0("<", obo, "PW_0000013> .")))
   
   # NODO ENFERMEDAD (Sujeto)
@@ -83,7 +87,7 @@ for (i in 1:nrow(enfermedad_ruta_limpio)) {
   
   # C. Tipo: sio:SIO_010299 "disease"
   lineas <- c(lineas, paste(uri_enfermedad, 
-                            paste0("<", rdf_ns, "type>"), 
+                            paste0("<", rdf, "type>"), 
                             paste0("<", sio, "SIO_010299> .")))
   
   # D. Label: DiseaseName
@@ -105,7 +109,7 @@ for (i in 1:nrow(enfermedad_ruta_limpio)) {
   
   # 2. Tipo: sio:SIO_001107 "pathway"
   lineas <- c(lineas, paste(uri_ruta, 
-                            paste0("<", rdf_ns, "type>"),
+                            paste0("<", rdf, "type>"),
                             paste0("<", sio, "SIO_001107> .")))
   
   # 3. Label: PathwayName
@@ -123,6 +127,7 @@ for (i in 1:nrow(enfermedad_ruta_limpio)) {
   
   # Mensaje de progreso
   if (i %% 5000 == 0) {
-    message(paste("Procesadas", i, "filas de", nrow(enfermedad_ruta_limpio)))
+    message(paste("Procesadas", i, "filas de", nrow(datos_enfermedad_ruta)))
   }
 }
+  
