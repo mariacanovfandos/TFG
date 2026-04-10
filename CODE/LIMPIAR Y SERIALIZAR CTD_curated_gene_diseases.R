@@ -7,7 +7,7 @@ library(readr)
 library(rdflib)
 
 # 2. Cargar el archivo saltando las líneas
-datos_gen_enfermedad <- read.csv("DB/CTD_curated_genes_diseases.csv", skip = 27)
+datos_gen_enfermedad <- read.csv("TFG/DB/CTD_curated_genes_diseases.csv", skip = 27)
 
 gen_enfermedad_limpio <- datos_gen_enfermedad %>%
   rename(GeneSymbol = 1) %>%
