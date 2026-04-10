@@ -5,12 +5,15 @@
 library(dplyr)
 library(readr)
 library(rdflib)
+library(tidyverse)
+library(data.table) 
 
 # 2. Cargar el archivo saltando las líneas
-datos_gen_enfermedad <- read.csv("TFG/DB/CTD_curated_genes_diseases.csv", skip = 27)
+datos_gen_enfermedad <- fread("https://ctdbase.org/reports/CTD_curated_genes_diseases.csv.gz", skip = 27, stringsAsFactors = FALSE)
 
-gen_enfermedad_limpio <- datos_gen_enfermedad %>%
-  rename(GeneSymbol = 1) %>%
+datos_gen_enfermedad <- datos_gen_enfermedad %>%
+  set_names(c("GeneSymbol", "GeneID", "DiseaseName", "DiseaseID", "DirectEvidence", 
+              "OmimIDs", "PubMedIDs")) %>%
   # Seleccionar columnas de interés
   select(GeneSymbol, DiseaseID, DirectEvidence, PubMedIDs) %>%
   mutate(across(everything(), as.character)) %>%
@@ -19,8 +22,6 @@ gen_enfermedad_limpio <- datos_gen_enfermedad %>%
   # Comprobar que hay GeneSymbol
   filter(!is.na(GeneSymbol) & !is.na(DiseaseID))
 
-head(gen_enfermedad_limpio)
-
 
 # ----------- SERIALIZACIÓN ------------
 
@@ -28,7 +29,7 @@ head(gen_enfermedad_limpio)
 grafo_gen_enfermedad <- rdf()
 
 # 2. Definir prefijos exactos
-rdf_ns <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+rdf <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 biolink <- "https://w3id.org/biolink/vocab/"
 sio <- "http://semanticscience.org/resource/"
 schema <- "https://schema.org/"
@@ -36,24 +37,24 @@ mesh_prefix <- "http://id.nlm.nih.gov/mesh/" # URI Oficial de Enfermedades
 
 # Prefijos para crear URIs nuevas
 pubmed_base <- "https://pubmed.ncbi.nlm.nih.gov/"
-assoc_base <- "http://tfg.org/asociacion_ge/"
+assoc_base <- "http://tfg.org/gene_disease_association/"
 gene_base <- "http://rdf.biogateway.eu/gene/9606/"
 
 # 3. Bucle
-for (i in 1:nrow(gen_enfermedad_limpio)) {
+for (i in 1:nrow(datos_gen_enfermedad)) {
   
-  # --- EXTRAEMOS LOS DATOS ---
-  gen_symbol <- gen_enfermedad_limpio$GeneSymbol[i] 
-  enfermedad_id <- gen_enfermedad_limpio$DiseaseID[i] 
-  evidencia <- gen_enfermedad_limpio$DirectEvidence[i] 
-  pubmed <- gen_enfermedad_limpio$PubMedIDs[i] 
+  # --- EXTRAER LOS DATOS ---
+  gen_symbol <- datos_gen_enfermedad$GeneSymbol[i] 
+  enfermedad_id <- datos_gen_enfermedad$DiseaseID[i] 
+  evidencia <- datos_gen_enfermedad$DirectEvidence[i] 
+  pubmed <- datos_gen_enfermedad$PubMedIDs[i] 
   
-  # --- CREAMOS LAS URIs DE ESTA FILA ---
-  uri_asociacion <- paste0(assoc_base, i)
-  uri_gen <- paste0(gene_base, gen_symbol)
+  # --- CREAR LAS URIs DE ESTA FILA ---
   
   # Limpiamos MESH:
   id_enf_limpio <- sub("MESH:", "", enfermedad_id)
+  uri_asociacion <- paste0(assoc_base, gen_symbol, "--", id_enf_limpio)
+  uri_gen <- paste0(gene_base, gen_symbol)
   uri_enfermedad <- paste0(mesh_prefix, id_enf_limpio)
   
   # --- CONSTRUIR TRIPLETAS ---
@@ -61,13 +62,13 @@ for (i in 1:nrow(gen_enfermedad_limpio)) {
   # A. El Sujeto es el Gen
   rdf_add(grafo_gen_enfermedad, 
           subject = uri_asociacion, 
-          predicate = paste0(rdf_ns, "subject"), 
+          predicate = paste0(rdf, "subject"), 
           object = uri_gen)
   
   # B. El Objeto es la Enfermedad
   rdf_add(grafo_gen_enfermedad, 
           subject = uri_asociacion, 
-          predicate = paste0(rdf_ns, "object"), 
+          predicate = paste0(rdf, "object"), 
           object = uri_enfermedad)
   
   # C. Evidencia Directa (si existe)
@@ -95,7 +96,7 @@ for (i in 1:nrow(gen_enfermedad_limpio)) {
       # Definir el tipo de artículo
       rdf_add(grafo_gen_enfermedad, 
               subject = uri_articulo, 
-              predicate = paste0(rdf_ns, "type"), 
+              predicate = paste0(rdf, "type"), 
               object = paste0(sio, "SIO_000154"))
       
       # Identificador del artículo
