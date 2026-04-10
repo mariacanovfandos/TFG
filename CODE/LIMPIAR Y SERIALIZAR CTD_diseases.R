@@ -7,7 +7,7 @@ install.packages(c("rdflib", "dplyr"))
 library(rdflib)
 library(dplyr)
 
-datos_enfermedades <- read.csv("DB/CTD_diseases.csv", skip = 27, stringsAsFactors = FALSE)
+datos_enfermedades <- read.csv("TFG/DB/CTD_diseases.csv", skip = 27, stringsAsFactors = FALSE)
 
 # 2. Corregir nombre de 1ª columna "X...DiseaseName" por "DiseaseName"
 colnames(datos_enfermedades)[1] <- "DiseaseName"
