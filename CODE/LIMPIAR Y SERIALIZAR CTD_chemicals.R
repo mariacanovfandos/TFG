@@ -7,7 +7,7 @@ install.packages(c("rdflib", "dplyr"))
 library(rdflib)
 library(dplyr)
 
-datos_quimicos <- read.csv("DB/CTD_chemicals.csv", skip = 27, stringsAsFactors = FALSE)
+datos_quimicos <- read.csv("TFG/DB/CTD_chemicals.csv", skip = 27, stringsAsFactors = FALSE)
 
 quimicos_limpio <- datos_quimicos %>%
   rename(ChemicalName = 1) %>%
