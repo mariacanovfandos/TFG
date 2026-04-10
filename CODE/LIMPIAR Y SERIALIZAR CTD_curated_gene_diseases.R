@@ -108,4 +108,4 @@ for (i in 1:nrow(gen_enfermedad_limpio)) {
 }
 
 # 4. Guardar el grafo definitivo en un archivo
-rdf_serialize(grafo_gen_enfermedad, doc = "RESULTADOS/gene_disease_association_ctd.ttl", format = "turtle")
+rdf_serialize(grafo_gen_enfermedad, doc = "TFG/RESULTADOS/gene_disease_association_ctd.ttl", format = "turtle")
