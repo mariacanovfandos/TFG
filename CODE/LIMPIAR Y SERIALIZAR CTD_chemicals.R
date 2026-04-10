@@ -2,17 +2,22 @@
 
 # ------------- LIMPIEZA --------------
 
-# 1. Instalar paquetes y cargarlos
-install.packages(c("rdflib", "dplyr"))
-library(rdflib)
+# 1. Cargar paquetes
+library(readr)
 library(dplyr)
+library(data.table)
+library(tidyverse)
+library(rdflib)
 
-datos_quimicos <- read.csv("TFG/DB/CTD_chemicals.csv", skip = 27, stringsAsFactors = FALSE)
+datos_quimicos <- fread("https://ctdbase.org/reports/CTD_chemicals.csv.gz", skip = 27, stringsAsFactors = FALSE)
 
-quimicos_limpio <- datos_quimicos %>%
-  rename(ChemicalName = 1) %>%
+datos_quimicos <- datos_quimicos %>%
+  set_names(c("ChemicalName", "ChemicalID", "CasRN", "PubChemCID", "PubChemSID", 
+              "DTXSID", "InChIKey", "Definition", "ParentIDs", 
+              "TreeNumbers", "ParentTreeNumbers", "MESHSynonyms", "CTDCuratedSynonyms")) %>%
   # Seleccionar columnas de interés
-  select(ChemicalName, ChemicalID, InChIKey, Definition) %>% 
+  select(ChemicalName, ChemicalID, InChIKey, Definition) %>%
+  mutate(across(everything(), ~na_if(., ""))) %>%
   # Quitar la fila de separadores y el posible nodo raíz "MESH:D" (Chemicals)
   filter(ChemicalName != "#") %>% 
   filter(ChemicalID != "MESH:D") 
@@ -32,13 +37,13 @@ owl <- "http://www.w3.org/2002/07/owl#"
 inchikey_prefix <- "https://identifiers.org/inchikey/"
 skos <- "http://www.w3.org/2004/02/skos/core#"
 
-# 3. Bucle para procesar toda la tabla
-for (i in 1:nrow(quimicos_limpio)) {
+# 3. Bucle
+for (i in 1:nrow(datos_quimicos)) {
   
-  ChemicalName <- quimicos_limpio$ChemicalName[i]
-  ID_inicial <- quimicos_limpio$ChemicalID[i]  
-  InChIKey <- quimicos_limpio$InChIKey[i]
-  Definicion <- quimicos_limpio$Definition[i] 
+  ChemicalName <- datos_quimicos$ChemicalName[i]
+  ID_inicial <- datos_quimicos$ChemicalID[i]  
+  InChIKey <- datos_quimicos$InChIKey[i]
+  Definicion <- datos_quimicos$Definition[i] 
   
   ID_solo_codigo <- sub("MESH:", "", ID_inicial)
   uri_quimico <- paste0(mesh_prefix, ID_solo_codigo)
@@ -81,6 +86,5 @@ for (i in 1:nrow(quimicos_limpio)) {
   }
 }
 
-
-# Guardar grafo en la carpeta "RESULTADOS" de tu proyecto
+# Guardar grafo en la carpeta "RESULTADOS"
 rdf_serialize(grafo_quimicos, doc = "TFG/RESULTADOS/chemicals_ctd.ttl", format = "turtle")
