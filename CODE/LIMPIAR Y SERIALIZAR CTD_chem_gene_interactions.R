@@ -23,7 +23,7 @@ enfermedad_ruta_limpio <- datos_enfermedad_ruta %>%
 # ----------- SERIALIZACIÓN ------------
 
 # 1. Guardar grafo
-ruta_guardado_cg <- "RESULTADOS/chem_gene_association_ctd.ttl"
+ruta_guardado_cg <- "TFG/RESULTADOS/chem_gene_association_ctd.ttl"
 cat("", file = ruta_guardado_cg)
 
 # 2. Prefijos
