@@ -83,4 +83,4 @@ for (i in 1:nrow(quimicos_limpio)) {
 
 
 # Guardar grafo en la carpeta "RESULTADOS" de tu proyecto
-rdf_serialize(grafo_quimicos, doc = "RESULTADOS/chemicals_ctd.ttl", format = "turtle")
+rdf_serialize(grafo_quimicos, doc = "TFG/RESULTADOS/chemicals_ctd.ttl", format = "turtle")
