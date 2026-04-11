@@ -79,6 +79,5 @@ for (i in 1:nrow(datos_chebi)) {
   }
 }
 
-# 5. Guardar el archivo final
-ruta_guardado <- "/Users/mersmac/Desktop/TFG/RESULTADOS/chebi_structures.ttl"
-rdf_serialize(grafo_chebi, doc = ruta_guardado, format = "turtle")
+# 5. Guardar el archivo final en la carpeta de resultados
+rdf_serialize(grafo_quimicos, doc = "../RESULTADOS/chebi_structures.ttl", format = "turtle")
