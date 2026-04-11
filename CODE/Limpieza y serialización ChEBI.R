@@ -80,4 +80,4 @@ for (i in 1:nrow(datos_chebi)) {
 }
 
 # 5. Guardar el archivo final en la carpeta de resultados
-rdf_serialize(grafo_quimicos, doc = "../RESULTADOS/chebi_structures.ttl", format = "turtle")
+rdf_serialize(grafo_chebi, doc = "../RESULTADOS/chebi_structures.ttl", format = "turtle")
