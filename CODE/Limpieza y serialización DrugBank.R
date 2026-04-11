@@ -64,5 +64,5 @@ for (i in 1:nrow(datos_drugbank)) {
           object = uri_inchi)
 }
 
-# 4. Guardar grafo
-rdf_serialize(grafo_drugbank, doc = "/Users/mersmac/Desktop/TFG/RESULTADOS/drugbank_vocabulary.ttl", format = "turtle")
+# 4. Guardar grafo en la carpeta "RESULTADOS"
+rdf_serialize(grafo_drugbank, doc = "../RESULTADOS/drugbank_vocabulary.ttl", format = "turtle")
