@@ -1,4 +1,4 @@
-# ------------- LIMPIAR Y SERIALIZAR CTD_chem_gene_interactions -------------
+# ------------- CTD_chem_gene_ixns -------------
 
 # ------------- LIMPIEZA --------------
 # 1. Cargar librerías
@@ -10,7 +10,7 @@ library(tidyverse)
 # 2. Leer archivo
 datos_quimico_gen <- fread("https://ctdbase.org/reports/CTD_chem_gene_ixns.csv.gz", skip = 27, stringsAsFactors = FALSE)
 
-# 3. Limpieza archivo
+# 3. Limpiar archivo
 datos_quimico_gen <- datos_quimico_gen %>%
   set_names(c("ChemicalName", "ChemicalID", "CasRN", "GeneSymbol", "GeneID", 
               "GeneForms", "Organism", "OrganismID", "Interaction", 
@@ -18,9 +18,9 @@ datos_quimico_gen <- datos_quimico_gen %>%
   select(ChemicalID, GeneSymbol, OrganismID, InteractionActions, PubMedIDs) %>%
   mutate(across(everything(), as.character)) %>%
   mutate(across(everything(), ~na_if(., ""))) %>%
-  slice(-1) %>%
   filter(OrganismID == "9606") %>%
-  filter(!is.na(ChemicalID) & !is.na(GeneSymbol))
+  filter(!is.na(ChemicalID) & !is.na(GeneSymbol)) %>%
+  distinct()
 
 
 # ----------- SERIALIZACIÓN ------------
@@ -49,15 +49,14 @@ for (i in 1:nrow(datos_quimico_gen)) {
   interaccion_val <- datos_quimico_gen$InteractionActions[i]
   pubmed <- datos_quimico_gen$PubMedIDs[i]
   
-  # Limpiamos el "MESH:" del identificador del químico por si acaso
   chem_limpio <- sub("MESH:", "", chem_id)
   
-  # CORRECCIÓN 2: Crear URI determinista (Químico--Gen) en lugar de usar 'i'
+  # Crear URI
   uri_asociacion <- paste0("<", assoc_base, chem_limpio, "--", gene_symbol, ">")
   uri_quimico <- paste0("<", mesh_prefix, chem_limpio, ">")
   uri_gen <- paste0("<", gene_base, gene_symbol, ">")
   
-  # Vector temporal para guardar las líneas de texto de esta iteración
+  # Vector temporal para guardar líneas de texto de la iteración
   lineas <- c()
   
   # Tripletas Estructurales
@@ -68,9 +67,6 @@ for (i in 1:nrow(datos_quimico_gen)) {
   lineas <- c(lineas, paste(uri_asociacion, 
                             paste0("<", rdfs, "subject>"), 
                             uri_quimico, "."))
-  lineas <- c(lineas, paste(uri_quimico, 
-                            paste0("<", rdf, "type>"), 
-                            paste0("<", sio, "SIO_010004> .")))
   
   lineas <- c(lineas, paste(uri_asociacion, 
                             paste0("<", rdfs, "object>"), 
@@ -78,12 +74,15 @@ for (i in 1:nrow(datos_quimico_gen)) {
   lineas <- c(lineas, paste(uri_gen, 
                             paste0("<", rdf, "type>"), 
                             paste0("<", sio, "SIO_010035> .")))
+
+   lineas <- c(lineas, paste(uri_quimico, 
+                            paste0("<", bao, "BAO_0000211>"), 
+                            uri_gen, "."))
   
   # Tripletas de InteractionActions (BAO)
-  if (!is.na(interaccion_val) && interaccion_val != "") {
+  if (!is.na(interaccion_val)) {
     lista_acciones <- strsplit(interaccion_val, "\\|")[[1]]
     for (accion in lista_acciones) {
-      # Para literales (texto), se ponen comillas dobles en lugar de los brackets de las URIs
       lineas <- c(lineas, paste(uri_asociacion, 
                                 paste0("<", bao, "BAO_0000196>"), 
                                 paste0("\"", accion, "\" .")))
