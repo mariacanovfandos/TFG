@@ -33,6 +33,8 @@ rdfs <- "http://www.w3.org/2000/01/rdf-schema#"
 rdf_type <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 obo <- "http://purl.obolibrary.org/obo/"
 schema = "https://schema.org/"
+mesh_prefix <- "https://id.nlm.nih.gov/mesh/" 
+omim_prefix <- "http://purl.bioontology.org/ontology/OMIM/"
 
 # 3. Bucle
 for (i in 1:nrow(datos_enfermedades)) {
