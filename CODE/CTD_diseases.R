@@ -1,23 +1,25 @@
-# ------------- LIMPIAR Y SERIALIZAR CTD_diseases -------------
+# ------------- CTD_diseases -------------
 
 # ------------- LIMPIEZA --------------
 
-# 1. Instalar paquetes y cargarlos
-install.packages(c("rdflib", "dplyr"))
+# 1. Cargar paquetes
 library(rdflib)
 library(dplyr)
 library(data.table)
 library(tidyverse)
 
-datos_enfermedades <- fread("https://ctdbase.org/reports/CTD_diseases.csv.gz", skip = 27, stringsAsFactors = FALSE)
+datos_enfermedades <- fread("https://ctdbase.org/reports/CTD_diseases.csv.gz", 
+                            skip = 27, stringsAsFactors = FALSE)
 
 # 2. Limpiar archivo
 datos_enfermedades <- datos_enfermedades %>%
   set_names(c("DiseaseName", "DiseaseID", "AltDiseaseIDs", "Definition", "ParentIDs",
               "TreeNumbers", "ParentTreeNumbers", "Synonyms", "SlimMappings")) %>%
   select(DiseaseName, DiseaseID) %>%
-  filter(DiseaseName != "#") %>%          # Elimina la fila del símbolo #
-  filter(DiseaseID != "MESH:C")           # Elimina la categoría general "Diseases"
+  mutate(across(everything(), as.character)) %>%
+  mutate(across(everything(), ~na_if(., ""))) %>%
+  filter(!is.na(DiseaseID)) %>%
+  distinct()
 
 
 # ----------- SERIALIZACIÓN ------------
@@ -37,13 +39,18 @@ for (i in 1:nrow(datos_enfermedades)) {
   
   # Extraer datos de fila actual
   DiseaseName <- datos_enfermedades$DiseaseName[i]
-  ID_inicial <- datos_enfermedades$DiseaseID[i] # Ej: "MESH:C538288"
+  ID_inicial <- datos_enfermedades$DiseaseID[i]
   
-  # Sustituir dos puntos por guion bajo para que sea una URL válida
-  ID_formateado <- sub(":", "_", ID_inicial)
-  
-  # Crear la URI final de esta enfermedad específica
-  uri_enfermedad <- paste0(obo, ID_formateado)
+  # Crear URI según la base de datos de origen
+  if (grepl("^MESH:", ID_inicial)) {
+    id_limpio <- sub("MESH:", "", ID_inicial)
+    uri_enfermedad <- paste0(mesh_prefix, id_limpio)
+  } else if (grepl("^OMIM:", ID_inicial)) {
+    id_limpio <- sub("OMIM:", "", ID_inicial)
+    uri_enfermedad <- paste0(omim_prefix, id_limpio)
+  } else {
+    uri_enfermedad <- paste0("http://unknown.org/disease/", ID_inicial)
+  }
   
   # --- TRIPLETAS ---
   
