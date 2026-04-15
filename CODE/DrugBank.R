@@ -1,4 +1,4 @@
-# ------------- LIMPIAR Y SERIALIZAR DRUGBANK -------------
+# ------------- DRUGBANK -------------
 
 #-------- LIMPIAR ---------
 
