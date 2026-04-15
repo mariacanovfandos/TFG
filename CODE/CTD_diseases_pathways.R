@@ -1,4 +1,4 @@
-# ------------- LIMPIAR Y SERIALIZAR CTD_diseases_pathways -------------
+# ------------- CTD_diseases_pathways -------------
 
 # ------------- LIMPIEZA --------------
 # 1. Cargar librerías
@@ -8,23 +8,23 @@ library(data.table)
 library(tidyverse)
 
 # 2. Leer archivo
-datos_enfermedad_ruta <- fread("https://ctdbase.org/reports/CTD_diseases_pathways.csv.gz", skip = 27, stringsAsFactors = FALSE)
+datos_enfermedad_ruta <- fread("https://ctdbase.org/reports/CTD_diseases_pathways.csv.gz", 
+                               skip = 27, stringsAsFactors = FALSE)
 
 # 3. Limpiar archivo
 datos_enfermedad_ruta <- datos_enfermedad_ruta %>%
-  set_names(c("DiseaseName", "DiseaseID", "PathwayName", "PathwayID", "InferenceGeneSymbol")) %>%
-  # Seleccionar columnas de interés
+  set_names(c("DiseaseName", "DiseaseID", "PathwayName", 
+              "PathwayID", "InferenceGeneSymbol")) %>%
   select(DiseaseName, DiseaseID, PathwayName, PathwayID) %>%
   mutate(across(everything(), as.character)) %>%
   mutate(across(everything(), ~na_if(., ""))) %>%
-  slice(-1) %>%
-  filter(!is.na(DiseaseID) & !is.na(PathwayID))
-
+  filter(!is.na(DiseaseID) & !is.na(PathwayID)) %>%
+  distinct()
 
 # ----------- SERIALIZACIÓN ------------
 
 # 1. Guardar grafo
-ruta_guardado_asociaciones <- "../RESULTADOS/diseases_pathways_association_ctd.ttl"
+ruta_guardado_asociaciones <- "/Users/mersmac/Desktop/TFG/RESULTADOS/diseases_pathways_association_ctd.ttl"
 cat("", file = ruta_guardado_asociaciones)
 
 # 2. Prefijos
@@ -34,12 +34,13 @@ sio <- "http://semanticscience.org/resource/"
 obo <- "http://purl.obolibrary.org/obo/"
 schema <- "https://schema.org/"
 owl <- "http://www.w3.org/2002/07/owl#"
+biolink <- "https://w3id.org/biolink/vocab/"
 
 mesh_prefix <- "http://id.nlm.nih.gov/mesh/"
-omim_prefix <- "http://purl.obolibrary.org/obo/OMIM_" 
+omim_prefix <- "http://purl.bioontology.org/ontology/OMIM/"
 kegg_base <- "http://identifiers.org/kegg.pathway/"
 reactome_base <- "http://identifiers.org/reactome/"
-assoc_base <- "http://tfg.org/disease_pathway_association/" 
+assoc_base <- "http://tfg.org/disease_pathway_association/"
 
 # 3. Bucle 
 for (i in 1:nrow(datos_enfermedad_ruta)) { 
@@ -52,32 +53,39 @@ for (i in 1:nrow(datos_enfermedad_ruta)) {
   
   # --- LIMPIAR IDs Y CREAR URIs ---
   
-  # Limpiar ID Enfermedad
-  id_enf_limpio <- sub("MESH:", "", enf_id)
-  uri_enfermedad <- paste0("<", mesh_prefix, id_enf_limpio, ">")
+
+  if (grepl("^MESH:", enf_id)) {
+    id_enf_limpio <- sub("MESH:", "", enf_id)
+    uri_enfermedad <- paste0("<", mesh_prefix, id_enf_limpio, ">")
+  } else if (grepl("^OMIM:", enf_id)) {
+    id_enf_limpio <- sub("OMIM:", "", enf_id)
+    uri_enfermedad <- paste0("<", omim_prefix, id_enf_limpio, ">")
+  } else {
+    next 
+  }
   
-  # Limpiar ID Ruta y crear URI de Ruta
-  if (grepl("KEGG:", ruta_id)) {
+  if (grepl("^KEGG:", ruta_id)) {
     id_ruta_limpio <- sub("KEGG:", "", ruta_id)
     uri_ruta <- paste0("<", kegg_base, id_ruta_limpio, ">")
-  } else if (grepl("REACT:", ruta_id)) {
+  } else if (grepl("^REACT:", ruta_id)) {
     id_ruta_limpio <- sub("REACT:", "", ruta_id)
     uri_ruta <- paste0("<", reactome_base, id_ruta_limpio, ">")
   } else {
-    id_ruta_limpio <- sub(".*:", "", ruta_id) 
-    uri_ruta <- paste0("<http://tfg.org/pathway_otro/", id_ruta_limpio, ">")
+    next 
   }
   
+  # URI
   uri_asociacion <- paste0("<", assoc_base, id_enf_limpio, "--", id_ruta_limpio, ">") 
+  
   
   # --- CONSTRUIR TRIPLETAS ---
   lineas <- c()
   
   # NODO PUENTE (Asociación)
-  # A. Tipo: obo:PW_0000013 "disease pathway"
+  # A. Tipo: biolink:Association
   lineas <- c(lineas, paste(uri_asociacion, 
                             paste0("<", rdf, "type>"), 
-                            paste0("<", obo, "PW_0000013> .")))
+                            paste0("<", biolink, "Association> .")))
   
   # NODO ENFERMEDAD (Sujeto)
   # B. Conexión del puente a la enfermedad
@@ -95,11 +103,15 @@ for (i in 1:nrow(datos_enfermedad_ruta)) {
                             paste0("<", rdfs, "label>"), 
                             paste0("\"", enf_nombre, "\" .")))
   
-  # E. Identifier: DiseaseID
+  # E. Identifier: DiseaseID (Guardamos el ID limpio sin prefijo por coherencia)
   lineas <- c(lineas, paste(uri_enfermedad, 
                             paste0("<", schema, "identifier>"), 
                             paste0("\"", id_enf_limpio, "\" .")))
   
+  # F. Relación Enfermedad -> Ruta ("involved in" RO_0002331)
+  lineas <- c(lineas, paste(uri_enfermedad, 
+                            paste0("<", obo, "RO_0002331>"), 
+                            uri_ruta, "."))
   
   # NODO RUTA (Objeto)
   # 1. Conexión del puente a la ruta
@@ -130,4 +142,3 @@ for (i in 1:nrow(datos_enfermedad_ruta)) {
     message(paste("Procesadas", i, "filas de", nrow(datos_enfermedad_ruta)))
   }
 }
-  
