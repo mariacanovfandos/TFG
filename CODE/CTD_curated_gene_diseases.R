@@ -33,7 +33,7 @@ rdf <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 biolink <- "https://w3id.org/biolink/vocab/"
 sio <- "http://semanticscience.org/resource/"
 schema <- "https://schema.org/"
-mesh_prefix <- "http://id.nlm.nih.gov/mesh/"
+mesh_prefix <- "https://id.nlm.nih.gov/mesh/"
 obo <- "http://purl.obolibrary.org/obo/"
 
 # Prefijos para crear URIs nuevas
