@@ -36,7 +36,7 @@ schema <- "https://schema.org/"
 owl <- "http://www.w3.org/2002/07/owl#"
 biolink <- "https://w3id.org/biolink/vocab/"
 
-mesh_prefix <- "http://id.nlm.nih.gov/mesh/"
+mesh_prefix <- "https://id.nlm.nih.gov/mesh/"
 omim_prefix <- "http://purl.bioontology.org/ontology/OMIM/"
 kegg_base <- "http://identifiers.org/kegg.pathway/"
 reactome_base <- "http://identifiers.org/reactome/"
