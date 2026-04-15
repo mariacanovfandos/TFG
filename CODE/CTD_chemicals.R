@@ -27,7 +27,7 @@ grafo_quimicos <- rdf()
 sio <- "http://semanticscience.org/resource/"
 rdfs <- "http://www.w3.org/2000/01/rdf-schema#"
 rdf_type <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-mesh_prefix <- "http://id.nlm.nih.gov/mesh/" 
+mesh_prefix <- "https://id.nlm.nih.gov/mesh/" 
 schema <- "https://schema.org/"
 owl <- "http://www.w3.org/2002/07/owl#"
 inchikey_prefix <- "https://identifiers.org/inchikey/"
