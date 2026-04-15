@@ -1,4 +1,4 @@
-# ------------- LIMPIAR Y SERIALIZAR CTD_curated_genes_diseases -------------
+# ------------- CTD_curated_genes_diseases -------------
 
 # ------------- LIMPIEZA --------------
 # 1. Cargar librería
@@ -21,11 +21,11 @@ datos_gen_enfermedad <- datos_gen_enfermedad %>%
   slice(-1) %>%
   # Comprobar que hay GeneSymbol
   filter(!is.na(GeneSymbol) & !is.na(DiseaseID))
-
+  distinct()
 
 # ----------- SERIALIZACIÓN ------------
 
-# 1. Inicializar el grafo de asociaciones
+# 1. Inicializar el grafo vacío
 grafo_gen_enfermedad <- rdf()
 
 # 2. Definir prefijos exactos
@@ -33,7 +33,8 @@ rdf <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 biolink <- "https://w3id.org/biolink/vocab/"
 sio <- "http://semanticscience.org/resource/"
 schema <- "https://schema.org/"
-mesh_prefix <- "http://id.nlm.nih.gov/mesh/" # URI Oficial de Enfermedades
+mesh_prefix <- "http://id.nlm.nih.gov/mesh/"
+obo <- "http://purl.obolibrary.org/obo/"
 
 # Prefijos para crear URIs nuevas
 pubmed_base <- "https://pubmed.ncbi.nlm.nih.gov/"
@@ -71,16 +72,25 @@ for (i in 1:nrow(datos_gen_enfermedad)) {
           predicate = paste0(rdf, "object"), 
           object = uri_enfermedad)
   
+  # Relación directa gen --> enfermedad
+  rdf_add(grafo_gen_enfermedad, 
+          subject = uri_gen, 
+          predicate = paste0(obo, "RO_0002331"), 
+          object = uri_enfermedad)
+  
   # C. Evidencia Directa (si existe)
-  if (!is.na(evidencia) && evidencia != "") {
-    rdf_add(grafo_gen_enfermedad, 
-            subject = uri_asociacion, 
-            predicate = paste0(biolink, "has_evidence"), 
-            object = evidencia)
+  if (!is.na(evidencia)) {
+    lista_evidencias <- strsplit(evidencia, "\\|")[[1]]
+    for (ev in lista_evidencias) {
+      rdf_add(grafo_gen_enfermedad, 
+              subject = uri_asociacion, 
+              predicate = paste0(biolink, "has_evidence"), 
+              object = ev)
+    }
   }
   
-  # D. PubMed (Con separación automática de la barra vertical '|')
-  if (!is.na(pubmed) && pubmed != "") {
+  # D. PubMed
+  if (!is.na(pubmed)) {
     
     lista_pubmeds <- strsplit(pubmed, "\\|")[[1]]
     
