@@ -1,7 +1,6 @@
-# ------------- LIMPIAR Y SERIALIZAR CTD_diseases -------------
+# ------------- CTD_chemicals -------------
 
-# ------------- LIMPIEZA --------------
-
+# ------------ LIMPIEZA -------------
 # 1. Cargar paquetes
 library(readr)
 library(dplyr)
@@ -17,10 +16,7 @@ datos_quimicos <- datos_quimicos %>%
               "TreeNumbers", "ParentTreeNumbers", "MESHSynonyms", "CTDCuratedSynonyms")) %>%
   # Seleccionar columnas de interés
   select(ChemicalName, ChemicalID, InChIKey, Definition) %>%
-  mutate(across(everything(), ~na_if(., ""))) %>%
-  # Quitar la fila de separadores y el posible nodo raíz "MESH:D" (Chemicals)
-  filter(ChemicalName != "#") %>% 
-  filter(ChemicalID != "MESH:D") 
+  mutate(across(everything(), ~na_if(., "")))
 
 # ----------- SERIALIZACIÓN ------------
 
