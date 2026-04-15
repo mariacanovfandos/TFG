@@ -36,7 +36,7 @@ sio <- "http://semanticscience.org/resource/"
 schema <- "https://schema.org/"
 bao <- "http://www.bioassayontology.org/bao#"
 
-mesh_prefix <- "http://id.nlm.nih.gov/mesh/"
+mesh_prefix <- "https://id.nlm.nih.gov/mesh/"
 gene_base <- "http://rdf.biogateway.eu/gene/9606/" 
 assoc_base <- "http://tfg.org/chemical_gene_association/" 
 pubmed_base <- "https://pubmed.ncbi.nlm.nih.gov/"
