@@ -8,7 +8,8 @@ library(data.table)
 library(tidyverse)
 
 # 2. Leer archivo
-datos_quimico_gen <- fread("https://ctdbase.org/reports/CTD_chem_gene_ixns.csv.gz", skip = 27, stringsAsFactors = FALSE)
+datos_quimico_gen <- fread("https://ctdbase.org/reports/CTD_chem_gene_ixns.csv.gz", 
+                           skip = 27, stringsAsFactors = FALSE)
 
 # 3. Limpiar archivo
 datos_quimico_gen <- datos_quimico_gen %>%
