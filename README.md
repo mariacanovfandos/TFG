@@ -30,7 +30,7 @@ El preprocesamiento de datos está programado en **R**. Se requieren las siguien
 ``R install.packages(c("dplyr", "readr", "data.table", "tidyverse", "rdflib"))´´
 
 ### 2. Generación del Grafo
-Los scripts descargan automáticamente los datos de CTD. Al ejecutar los scripts de /CODE/, se realiza el filtrado de duplicados y la estandarización de URIs, generando el grafo en formato Turtle.
+Los scripts descargan automáticamente los datos de CTD, ChEBI y DrugBank. Al ejecutar los scripts presentes en la carpeta /CODE/, se realiza la limpieza y serialización de los datos de cada base de datos, generando el grafo en formato Turtle.
 
 ### 3. Exploración en GraphDB
 Cargar los archivos .ttl en un repositorio de Ontotext GraphDB y utilizar las archivos de la carpeta /SPARQL/ para interrogar al grafo y reproducir las consultas del trabajo.
