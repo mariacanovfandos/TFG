@@ -1,8 +1,8 @@
 # Grafo de Conocimiento Semántico: Impacto Químico en la Salud
 
 
-Este repositorio contiene el código fuente, los scripts de procesamiento y las consultas SPARQL asociados al Trabajo de Fin de Grado (TFG) para la construcción de un Grafo de Conocimiento Semántico (Knowledge Graph). 
-El proyecto extrae, limpia y serializa datos de la *Comparative Toxicogenomics Database* (CTD) para modelar computacionalmente los efectos de diversos compuestos químicos en la salud, poniendo especial énfasis en el análisis de fármacos quimioterápicos y agentes dopantes.
+Este repositorio contiene el código fuente, los scripts de procesamiento y las consultas SPARQL asociados al Trabajo de Fin de Grado para el desarrollo de un Grafo de Conocimiento Semántico (Knowledge Graph). 
+El proyecto extrae, limpia y serializa datos de la *Comparative Toxicogenomics Database* (CTD), ChEBI y DrugBank para modelar computacionalmente los efectos de diversos compuestos químicos en la salud, poniendo especial énfasis en el análisis de fármacos quimioterápicos y agentes dopantes.
 
 
 ## Resumen y Objetivos
