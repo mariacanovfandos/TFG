@@ -22,7 +22,9 @@ datos_chebi <- datos_chebi %>%
   # Convertir espacios en blanco a NA reales
   mutate(across(everything(), ~na_if(., ""))) %>%
   # Que no haya filas vacías
-  filter(!is.na(ChEBI_ID) & !is.na(InChIKey))
+  filter(!is.na(ChEBI_ID) & !is.na(InChIKey)) %>%
+  na.omit() %>% 
+  distinct()
 
 
 
@@ -74,7 +76,7 @@ for (i in 1:nrow(datos_chebi)) {
           object = uri_inchi)
   
   # Mensaje de progreso
-  if (i %% 20000 == 0) {
+  if (i %% 10000 == 0) {
     message(paste("Procesadas", i, "filas de ChEBI"))
   }
 }
