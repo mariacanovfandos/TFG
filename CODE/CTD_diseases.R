@@ -15,7 +15,7 @@ datos_enfermedades <- fread("https://ctdbase.org/reports/CTD_diseases.csv.gz",
 datos_enfermedades <- datos_enfermedades %>%
   set_names(c("DiseaseName", "DiseaseID", "AltDiseaseIDs", "Definition", "ParentIDs",
               "TreeNumbers", "ParentTreeNumbers", "Synonyms", "SlimMappings")) %>%
-  select(DiseaseName, DiseaseID) %>%
+  select(DiseaseName, DiseaseID, Definition) %>%
   mutate(across(everything(), as.character)) %>%
   mutate(across(everything(), ~na_if(., ""))) %>%
   filter(!is.na(DiseaseID)) %>%
@@ -35,6 +35,7 @@ obo <- "http://purl.obolibrary.org/obo/"
 schema = "https://schema.org/"
 mesh_prefix <- "https://id.nlm.nih.gov/mesh/" 
 omim_prefix <- "http://purl.bioontology.org/ontology/OMIM/"
+skos <- "http://www.w3.org/2004/02/skos/core#"
 
 # 3. Bucle
 for (i in 1:nrow(datos_enfermedades)) {
@@ -42,6 +43,7 @@ for (i in 1:nrow(datos_enfermedades)) {
   # Extraer datos de fila actual
   DiseaseName <- datos_enfermedades$DiseaseName[i]
   ID_inicial <- datos_enfermedades$DiseaseID[i]
+  Definicion <- datos_enfermedades$Definition[i]
   
   # Crear URI según la base de datos de origen
   if (grepl("^MESH:", ID_inicial)) {
@@ -56,23 +58,36 @@ for (i in 1:nrow(datos_enfermedades)) {
   
   # --- TRIPLETAS ---
   
-  # Tripleta A: Declarar que este nodo es de tipo "Enfermedad" (SIO_010299)
+  # Tripleta A: nodo es de tipo "Enfermedad" (SIO_010299)
   rdf_add(mi_grafo, 
           subject = uri_enfermedad, 
           predicate = rdf_type, 
           object = paste0(sio, "SIO_010299"))
   
-  # Tripleta B: Asignar su nombre en texto normal
+  # Tripleta B: asignar su nombre en texto normal
   rdf_add(mi_grafo, 
           subject = uri_enfermedad, 
           predicate = paste0(rdfs, "label"), 
           object = DiseaseName)
   
-  # Tripleta C: schema:identifier -> DiseaseID (asignar su identificador)
+  # Tripleta C: asignar su identificador
   rdf_add(mi_grafo, 
           subject = uri_enfermedad, 
           predicate = paste0(schema, "identifier"), 
           object = ID_inicial)
+  
+  #Definition
+  if (!is.na(Definicion)) {
+    rdf_add(mi_grafo, 
+            subject = uri_enfermedad, 
+            predicate = paste0(skos, "definition"), 
+            object = Definicion)
+  }
+  
+  # Avance
+  if (i %% 10000 == 0) {
+    message(paste("Procesadas", i, "filas de", nrow(datos_enfermedades)))
+  }
 }
 
 
