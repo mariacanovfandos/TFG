@@ -7,8 +7,8 @@ library(data.table)
 library(tidyverse)
 library(rdflib)
 
-# 1. Leer directamente desde un enlace web con fread
-datos_drugbank <- fread("https://raw.githubusercontent.com/mariacanovfandos/TFG/refs/heads/main/DB/drugbank%20vocabulary.csv",
+# 1. Leer archivo
+datos_drugbank <- fread("https://go.drugbank.com/releases/5-1-17/downloads/all-drugbank-vocabulary?_gl=1*1y4a64v*_up*MQ..*_ga*MTU3ODU2OTI5NC4xNzc2NDExODUx*_ga_DDLJ7EEV9M*czE3NzY0MTE4NTAkbzEkZzEkdDE3NzY0MTE4ODAkajMwJGwwJGgw",
                         stringsAsFactors = FALSE)
 
 # 2. Limpieza 
@@ -34,7 +34,7 @@ rdf_type <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 sio <- "http://semanticscience.org/resource/"
 rdfs <- "http://www.w3.org/2000/01/rdf-schema#"
 
-# 3. Bucle de Serialización
+# 3. Bucle
 for (i in 1:nrow(datos_drugbank)) {
   
   db_id <- datos_drugbank$DrugBank_ID[i]
@@ -51,17 +51,22 @@ for (i in 1:nrow(datos_drugbank)) {
           predicate = rdf_type, 
           object = paste0(sio, "SIO_010004"))
   
-  # B. Ponerle su nombre
+  # B. Añadir nombre
   rdf_add(grafo_drugbank, 
           subject = uri_drugbank, 
           predicate = paste0(rdfs, "label"), 
           object = Name)
   
-  # C. Unirlo al InChIKey universal
+  # C. Unir a InChIKey
   rdf_add(grafo_drugbank, 
           subject = uri_drugbank, 
           predicate = paste0(owl, "sameAs"), 
           object = uri_inchi)
+  
+  # Avance
+  if (i %% 10000 == 0) {
+    message(paste("Procesadas", i, "filas de DrugBank"))
+  }
 }
 
 # 4. Guardar grafo en la carpeta "RESULTADOS"
