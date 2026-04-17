@@ -18,7 +18,6 @@ datos_gen_enfermedad <- datos_gen_enfermedad %>%
   select(GeneSymbol, DiseaseID, DirectEvidence, PubMedIDs) %>%
   mutate(across(everything(), as.character)) %>%
   mutate(across(everything(), ~na_if(., ""))) %>%
-  slice(-1) %>%
   # Comprobar que hay GeneSymbol
   filter(!is.na(GeneSymbol) & !is.na(DiseaseID))
   distinct()
@@ -28,15 +27,13 @@ datos_gen_enfermedad <- datos_gen_enfermedad %>%
 # 1. Inicializar el grafo vacío
 grafo_gen_enfermedad <- rdf()
 
-# 2. Definir prefijos exactos
+# 2. Definir prefijos 
 rdf <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 biolink <- "https://w3id.org/biolink/vocab/"
 sio <- "http://semanticscience.org/resource/"
 schema <- "https://schema.org/"
 mesh_prefix <- "https://id.nlm.nih.gov/mesh/"
 obo <- "http://purl.obolibrary.org/obo/"
-
-# Prefijos para crear URIs nuevas
 pubmed_base <- "https://pubmed.ncbi.nlm.nih.gov/"
 assoc_base <- "http://tfg.org/gene_disease_association/"
 gene_base <- "http://rdf.biogateway.eu/gene/9606/"
@@ -59,6 +56,11 @@ for (i in 1:nrow(datos_gen_enfermedad)) {
   uri_enfermedad <- paste0(mesh_prefix, id_enf_limpio)
   
   # --- CONSTRUIR TRIPLETAS ---
+  # Type
+  rdf_add(grafo_gen_enfermedad, 
+          subject = uri_asociacion, 
+          predicate = paste0(rdf, "type"), 
+          object = paste0(sio, "SIO_000983"))
   
   # A. El Sujeto es el Gen
   rdf_add(grafo_gen_enfermedad, 
@@ -91,9 +93,7 @@ for (i in 1:nrow(datos_gen_enfermedad)) {
   
   # D. PubMed
   if (!is.na(pubmed)) {
-    
     lista_pubmeds <- strsplit(pubmed, "\\|")[[1]]
-    
     for (pmid in lista_pubmeds) {
       uri_articulo <- paste0(pubmed_base, pmid)
       
@@ -116,7 +116,13 @@ for (i in 1:nrow(datos_gen_enfermedad)) {
               object = pmid)
     }
   }
+  
+  # Avance
+  if (i %% 10000 == 0) {
+    message(paste("Procesadas", i, "filas de", nrow(datos_gen_enfermedad)))
+  }
 }
 
 # 4. Guardar el grafo definitivo en un archivo
 rdf_serialize(grafo_gen_enfermedad, doc = "../RESULTADOS/gene_disease_association_ctd.ttl", format = "turtle")
+
