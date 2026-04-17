@@ -138,7 +138,7 @@ for (i in 1:nrow(datos_enfermedad_ruta)) {
   cat(paste(lineas, collapse = "\n"), "\n", file = ruta_guardado_asociaciones, append = TRUE)
   
   # Mensaje de progreso
-  if (i %% 5000 == 0) {
+  if (i %% 10000 == 0) {
     message(paste("Procesadas", i, "filas de", nrow(datos_enfermedad_ruta)))
   }
 }
