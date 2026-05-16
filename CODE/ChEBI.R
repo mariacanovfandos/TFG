@@ -1,31 +1,52 @@
 # ------------- CHEBI -------------
 
-#------ LIMPIAR -------
-
+# -------- LIMPIAR -------
+# 1. Cargar librerías y archivos
 library(dplyr)
 library(data.table)
 library(tidyverse)
 library(rdflib)
 
-# 1. Leer el archivo de estructuras comprimido online
-datos_chebi <- fread("https://ftp.ebi.ac.uk/pub/databases/chebi/flat_files/structures.tsv.gz", 
-                     stringsAsFactors = FALSE)
+datos_compuestos <- fread("https://ftp.ebi.ac.uk/pub/databases/chebi/flat_files/compounds.tsv.gz", 
+                          stringsAsFactors = FALSE)
+datos_relaciones <- fread("https://ftp.ebi.ac.uk/pub/databases/chebi/flat_files/relation.tsv.gz",
+                          stringsAsFactors = FALSE)
+datos_estructuras <- fread("https://ftp.ebi.ac.uk/pub/databases/chebi/flat_files/structures.tsv.gz",
+                           stringsAsFactors = FALSE)
 
-# 2. Limpieza y Filtrado
-datos_chebi <- datos_chebi %>%
-  # Seleccionar columnas de interés
+# 2. Seleccionar variables de interés de compuestos
+nombres_chebi <- datos_compuestos %>%
+  select(id, name, stars) %>%
+  rename(ChEBI_ID = id, Chebi_Name = name)
+
+# 3. Sustituir el ID del rol por su nombre
+nombres_roles <- datos_compuestos %>%
+  select(id, name) %>%
+  rename(Role_ID = id, Role_Name = name)
+
+
+# 4. Seleccionar variables de interés de relaciones y filtrar por "has_role"
+roles_asignados <- datos_relaciones %>%
+  filter(relation_type_id == 4) %>%
+  select(init_id, final_id) %>%
+  rename(ChEBI_ID = init_id, Role_ID = final_id)
+
+
+# Unir 3 y 4
+chebi_roles_final <- roles_asignados %>%
+  inner_join(nombres_roles, by = "Role_ID") %>%
+  group_by(ChEBI_ID) %>%
+  summarise(Chemical_Role = paste(Role_Name, collapse = " | "))
+
+# 3. Cruzar archivos limpios
+datos_chebi <- datos_estructuras %>%
   select(compound_id, standard_inchi_key) %>%
-  rename(ChEBI_ID = compound_id,
-         InChIKey = standard_inchi_key) %>%
-  # Convertir todo a texto 
+  rename(ChEBI_ID = compound_id, InChIKey = standard_inchi_key) %>%
+  inner_join(nombres_chebi, by = "ChEBI_ID") %>%
+  left_join(chebi_roles_final, by = "ChEBI_ID") %>%
   mutate(across(everything(), as.character)) %>%
-  # Convertir espacios en blanco a NA reales
-  mutate(across(everything(), ~na_if(., ""))) %>%
-  # Que no haya filas vacías
-  filter(!is.na(ChEBI_ID) & !is.na(InChIKey)) %>%
-  na.omit() %>% 
+  filter(!is.na(InChIKey)) %>%
   distinct()
-
 
 
 #--------- SERIALIZAR ----------
@@ -40,40 +61,43 @@ owl <- "http://www.w3.org/2002/07/owl#"
 rdf_type <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 sio <- "http://semanticscience.org/resource/"
 
-# 3. Bucle
 for (i in 1:nrow(datos_chebi)) {
   
-  # Extraer datos de la fila
-  chebi_id <- datos_chebi$ChEBI_ID[i]
-  inchi <- datos_chebi$InChIKey[i]
+  uri_chebi <- paste0(chebi_prefix, datos_chebi$ChEBI_ID[i])
+  uri_inchi <- paste0(inchikey_prefix, sub("InChIKey=", "", datos_chebi$InChIKey[i]))
   
-  # Escudo protector: Si falta algún dato vital, pasamos a la siguiente fila
-  if (length(chebi_id) == 0 || is.na(chebi_id) || length(inchi) == 0 || is.na(inchi)) {
-    next 
-  }
-  
-  # URIs
-  # Nota: En ChEBI, el COMPOUND_ID viene como un número (ej. 16236). 
-  # Le concatenamos "CHEBI_" delante para que sea la URI oficial.
-  uri_chebi <- paste0(chebi_prefix, chebi_id)
-  
-  # Limpiamos el InChIKey por si acaso el texto viniera con "InChIKey=" delante
-  inchi_limpio <- sub("InChIKey=", "", inchi)
-  uri_inchi <- paste0(inchikey_prefix, inchi_limpio)
-  
-  # --- TRIPLETAS ---
-  
-  # A. Crear el nodo de ChEBI (Es un Químico)
+  # A. Tipo y Equivalencia
   rdf_add(grafo_chebi, 
           subject = uri_chebi, 
           predicate = rdf_type, 
           object = paste0(sio, "SIO_010004"))
   
-  # B. La Integración (owl:sameAs apuntando al InChIKey universal)
   rdf_add(grafo_chebi, 
           subject = uri_chebi, 
           predicate = paste0(owl, "sameAs"), 
           object = uri_inchi)
+  
+  # B. Nombre de la molécula
+  rdf_add(grafo_chebi, 
+          subject = uri_chebi, 
+          oredicate = paste0(rdfs, "label"), 
+          object = datos_chebi$Chebi_Name[i])
+  
+  # C. Añadir los Roles como literales independientes
+  if (!is.na(datos_chebi$Chemical_Role[i])) {
+    
+    # 1. Separar texto usando la barra como delimitador
+    roles_separados <- unlist(strsplit(datos_chebi$Chemical_Role[i], " \\| "))
+    
+    # 2. Bucle para crear una tripleta por cada rol
+    for (rol in roles_separados) {
+      rdf_add(grafo_chebi, 
+              subject = uri_chebi, 
+              predicate = paste0(sio, "SIO_000008"), # Propiedad 'has attribute'
+              object = trimws(rol))
+    }
+  }
+}
   
   # Mensaje de progreso
   if (i %% 10000 == 0) {
@@ -82,4 +106,4 @@ for (i in 1:nrow(datos_chebi)) {
 }
 
 # 5. Guardar el archivo final en la carpeta de resultados
-rdf_serialize(grafo_chebi, doc = "../RESULTADOS/chebi_structures.ttl", format = "turtle")
+rdf_serialize(grafo_chebi, doc = "../RESULTADOS/chebi_DB.ttl", format = "turtle")
